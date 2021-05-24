@@ -11,9 +11,154 @@
 
 ①　横一列に３つのViewを並べるレイアウト。その際、３つのViewの幅(width)の比率が、`3:2:1`になるようにすること。また、それぞれ左右に`10dp`ずつマージンを取り、高さはすべて`100dp`とすること。
 
+（３）① Answer
+```
+<LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <View
+            android:layout_width="0dp"
+            android:layout_weight="3"
+            android:layout_height="100dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="5dp"
+            android:background="@android:color/holo_red_dark"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_weight="2"
+            android:layout_height="100dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
+            android:background="@android:color/holo_green_dark"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="100dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="10dp"
+            android:background="@android:color/holo_blue_dark"/>
+        
+    </LinearLayout>
+```
+
 ②　画面いっぱい（上下左右に`10dp`ずつマージン）にViewを置き、それに重ねる形で、width `100dp`、height `100dp`のViewを縦横中央にそろえたレイアウト。色はそれぞれ変えること。
 
+（３）② Answer:
+```
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:layout_marginTop="10dp"
+    android:layout_marginBottom="10dp"
+    android:layout_marginStart="10dp"
+    android:layout_marginEnd="10dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <View
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@android:color/holo_red_dark"/>
+
+        <View
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@android:color/holo_green_dark"/>
+
+        <View
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@android:color/holo_blue_dark"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <View
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@android:color/darker_gray"/>
+
+        <View
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@android:color/black"/>
+
+        <View
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@android:color/holo_orange_dark"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <View
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@android:color/holo_purple"/>
+
+        <View
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@android:color/holo_green_light"/>
+
+        <View
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@android:color/holo_red_light"/>
+
+    </LinearLayout>
+
+</LinearLayout>
+```
+
 ③　親ビューの下部に横幅`100%`、高さは可変サイズのTextViewを配置し、その上部にwidth `100dp`、height `100dp`のViewを左右の中央にそろえたレイアウト。
+
+（３）③ Answer
+```
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+        android:id="@+id/textview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="This is textView"
+        android:gravity="center"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+    
+    <View
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/textview"
+        android:background="@android:color/holo_green_light"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
 
 **（４）以下のコードのTODO箇所を埋める形で、ActivityのContentViewの各Viewコンポーネントをプロパティアクセスで参照するコードを、①findViewByIdを使う方法、②ViewBindingを使う方法それぞれで書いてください。
 その際、下記の要件に従うこと。**
@@ -21,15 +166,22 @@
 > - レイアウトファイルの名前は、`main_activity.xml`とする
 
 ```kotlin
-class MainActivity : Activity() {
+class MainActivity : Activity(), ViewBindable {
+    override lateinit var binding: ViewBinding
     private val findViewByIdView: View?
-        get() = // TODO: ①findViewByIdからViewを取得
+        get() = findViewById<View>(R.id.view)
+        findViewById<Button>(R.id.button) as? Button
     private val viewBindingView: View?
-        get() = // TODO: ②ViewBindingからViewを取得
+        get() = (binding as? MainActivityBinding)?.view
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // TODO: ここでContentViewを設定すること。①②それぞれでコードを書くこと
+        binding = MainActivityBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
+        
+        findViewByIdView?.setBackgroundColor(resources.getColor(R.color.red))
+        viewBindingView?.setBackgroundColor(resources.getColor(R.color.blue))
     }
 }
 interface ViewBindable {
@@ -77,29 +229,43 @@ enum class ActivityExtraData(val key: String) {
 class MainActivity : Activity() {
     private val button: Button?
         get() = findViewById<Button>(R.id.button) as? Button
+    var number: Int? = null
+    var content: Content? = null
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         button?.setOnClickListener {
-            // TODO: Contentデータを設定してTargetActivity呼び出し
+            val contentData = Content()
+            val  intent = Intent(this, LoginActivity::class.java)
+            intent.putExtra(ActivityExtraData.NUMBER.key, 1)
+            intent.putExtra(ActivityExtraData.CONTENT.key, contentData)
+            startActivityForResult(intent, ActivityRequestCode.TARGET.code)
         }
     }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        // TODO: TargetActivityから返されたデータをデバッグ
+        if (requestCode == ActivityRequestCode.TARGET.code && resultCode == ActivityResultCode.TARGET.code) {
+            Log.d("ReturnedData", "Value: ${data?.extras?.getInt(ActivityExtraData.NUMBER.key)}")
+        }
     }
 }
 class TargetActivity : Activity() {
     private val closeButton: Button?
         get() = findViewById<Button>(R.id.button) as? Button
+    var number: Int? = null
+    var content: Content? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_target)
-        // TODO: MainActivityから渡されたデータを復元
+        content = intent.extras?.get(ActivityExtraData.CONTENT.key) as? Content
+        number = intent.extras?.get(ActivityExtraData.NUMBER.key) as? Int
         
         closeButton?.setOnClickListener {
-            // TODO: MainActivityに返す任意のデータ（Int）を設定してください
+            val data = Intent()
+            data.putExtra(ActivityExtraData.NUMBER.key, number)
+            setResult(ActivityResultCode.TARGET.code, data)
             finish()
         }
     }
@@ -124,18 +290,34 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val content = Content(id = 1234, text = "test content")
-        // TODO
+        view?.listener = object : SampleView.ClickListener {
+            override fun onClick() {
+                Log.d("Button", "Button clicked in SampleView")
+            }
+        }
+        view?.content = content
     }
 }
 class SampleView : FrameLayout {
     private val textView: TextView?
         get() = findViewById<TextView>(R.id.text_view) as? TextView
     private val button: Button?
-        get() = findViewById<TextView>(R.id.text_view) as? TextView
+        get() = findViewById<Button>(R.id.text_view) as? Button
+    var listener: ClickListener? = null
+    var content: Content? =  null
+    
     constructor(context: Context) : super(context) {
-        // TODO
+        button?.setOnClickListener {
+            listener?.onClick()
+        }
     }
-    // TODO
+    fun update() {
+        textView?.text = content?.name
+    }
+
+    interface ClickListener {
+        fun onClick()
+    }
 }
 ```
 
