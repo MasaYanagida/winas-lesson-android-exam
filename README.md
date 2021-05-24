@@ -2,16 +2,80 @@
 ## Day1
 
 **（１）モバイルアプリを開発する上で、設計上留意すべき点はどこになるか、サーバサイドやフロントエンドとの違いの観点から説明してください。**
+```
+A:
+　・WebのMVCのモデルを無理に当てはめない。Activity系のクラスが、VとCの一部の双方の役割を担う。
+　・画面内のUI部分を分割したい（共通で利用したり、複雑だから分けたい）場合は、カスタムビューやフラグメントを作って移譲する（別クラスに切り出す）。
+　・複数画面を跨いだりする機能は、Service/Manager/Helperを活用する。
+```
 
 **（２）Activityへの過度な依存や類似/同一コードの重複を避けるため、コード設計上どのような対策をとることが望ましいか、プレゼンテーション層（View）と処理・ビジネスロジック（Controller）それぞれの観点から、実際のコード例を挙げて説明してください。**
+
+
 
 ## Day2
 
 **（３）以下のそれぞれのレイアウトを実現するレイアウトXMLを書いてください。**
 
 ①　横一列に３つのViewを並べるレイアウト。その際、３つのViewの幅(width)の比率が、`3:2:1`になるようにすること。また、それぞれ左右に`10dp`ずつマージンを取り、高さはすべて`100dp`とすること。
+```
+A:
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:orientation="horizontal"
+        android:weightSum="6">
+        <TextView
+            android:layout_weight="3"
+            android:layout_width="0dp"
+            android:layout_height="100dp"
+            android:background="#b0dc03"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            />
+        <TextView
+            android:layout_weight="2"
+            android:layout_width="0dp"
+            android:layout_height="100dp"
+            android:background="#031cd3"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="100dp"
+            android:background="#d31c03"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            />
+</LinearLayout>
+```
 
 ②　画面いっぱい（上下左右に`10dp`ずつマージン）にViewを置き、それに重ねる形で、width `100dp`、height `100dp`のViewを縦横中央にそろえたレイアウト。色はそれぞれ変えること。
+```
+A:
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#b0dc03"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        />
+
+    <TextView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:background="#031cd3"
+        android:layout_gravity="center"
+        />
+</FrameLayout>
+```
 
 ③　親ビューの下部に横幅`100%`、高さは可変サイズのTextViewを配置し、その上部にwidth `100dp`、height `100dp`のViewを左右の中央にそろえたレイアウト。
 
