@@ -88,13 +88,20 @@ A:
 class MainActivity : Activity() {
     private val findViewByIdView: View?
         get() = // TODO: ①findViewByIdからViewを取得
+        get() = findViewById(R.id.main_activity_view1)
+
     private val viewBindingView: View?
-        get() = // TODO: ②ViewBindingからViewを取得
+        A. ②
+        get() = MainActivityBinding.inflate(layoutInflater).root
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // TODO: ここでContentViewを設定すること。①②それぞれでコードを書くこと
-    }
+        A. ①
+        setContentView(R.layout.main_activity)
+
+        A. ②
+        setContentView(viewBindingView)
 }
 interface ViewBindable {
     var binding: ViewBinding
@@ -146,11 +153,17 @@ class MainActivity : Activity() {
         setContentView(R.layout.activity_main)
         button?.setOnClickListener {
             // TODO: Contentデータを設定してTargetActivity呼び出し
+            val content = Content()
+            intent.putExtra(ActivityExtraData.CONTENT.key, content)
+
+            val intent = Intent(applicationContext, TargetActivity::class.java)
+            startActivity(intent)
         }
     }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         // TODO: TargetActivityから返されたデータをデバッグ
+        showToast(data.getIntExtra(ActivityExtraData.NUMBER.key))
     }
 }
 class TargetActivity : Activity() {
@@ -161,9 +174,14 @@ class TargetActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_target)
         // TODO: MainActivityから渡されたデータを復元
+        var content = intent.getParcelableExtra<Content>(ActivityExtraData.CONTENT.key)
         
         closeButton?.setOnClickListener {
             // TODO: MainActivityに返す任意のデータ（Int）を設定してください
+            val intentSub = Intent()
+            intentSub.putExtra(ActivityExtraData.NUMBER.key, 999)
+            setResult(Activity.RESULT_OK, intentSub)
+
             finish()
         }
     }
@@ -225,6 +243,21 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         // TODO
+        loadDrawable(R.drawable.icon, this)?.let {
+            imageView1?.setImageBitmap(it.getBitmap())
+        }
+
+        imageView2?.setImageBitmap(getBitmapFromAssets("icon2.png"))
+
+        imageView3?.setImageBitmap(BrandIconDrawable.create(this, BrandIcon.TWITTER, 20.pixel).getBitmap())
+
+        Handler().postDelayed({
+            imageView4?.let {
+                Picasso.get()
+                    .load("https://sample.com/sample.jpg")
+                    .into(it)
+            }
+        }, 500L)
     }
 }
 enum class BrandIcon(val key: Int) {
