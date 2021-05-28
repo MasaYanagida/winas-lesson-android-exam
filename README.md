@@ -3,7 +3,7 @@
 
 **（１）モバイルアプリを開発する上で、設計上留意すべき点はどこになるか、サーバサイドやフロントエンドとの違いの観点から説明してください。**
 
-**（２）Activityへの過度な依存や類似/同一コードの重複を避けるため、コード設計上どのような対策をとることが望ましいか、プレゼンテーション層（View）と処理・ビジネスロジック（Controller）それぞれの観点から、実際のコード例を挙げて説明してください。**
+**（２）Activityへの過度な依存や類似/同一コードの重複を避けるため、コード設計上どのような対策をとることが望ましいか、プレゼンテーション層（View）と処理・ビジネスロジック（Controller）それぞれの観点から説明してください。**
 
 ## Day2
 
@@ -39,7 +39,7 @@ interface ViewBindable {
 
 ## Day3
 
-**（５）以下のコードのTODO箇所を埋める形で、①Activityが新しい別のActivityを呼び出した際にデータを渡し、②呼び出されたActivityが閉じられる際に古いActivityにデータを渡すコードを書いてください。なお、コード中に使われるIDコードは、コード内にあるenumを使用すること。**
+**（５）以下のコードのTODO箇所を埋める形で、①Activityが新しい別のActivityを呼び出した際にデータ（Contentデータ）を渡し、②呼び出されたActivityが閉じられる際に古いActivityにデータ(Int型の数値)を渡すコードを書いてください。なお、コード中に使われるIDは、コード内にあるenumを使用すること。**
 
 ```kotlin
 data class Content(
@@ -108,7 +108,7 @@ class TargetActivity : Activity() {
 
 **（６）以下のコードのTODO箇所を埋めて、Activity（呼び出し側）とカスタムビューとの間での処理のやりとりを実現するコードを書いてください。その際、下記の条件を満たすこと。**
 
-> - `SampleView`に`listener`を設定して、ボタンがタップされた際にUIViewController側でイベントを受け取るようにすること
+> - `SampleView`に`listener`を設定して、ボタンがタップされた際にActivity側でイベントを受け取るようにすること
 > - `SampleView`にデータ（`Content`）を設定したら、`textView`にデータの`text`を表示させること
 > - `SampleView`の`update()`関数を呼び出したら、`textView`に表示される情報を更新すること
 
@@ -278,13 +278,11 @@ object CachedTypeFaces {
 
 ①　アプリのインストール後チュートリアルの閲覧が完了したかどうかのフラグ
 
-②　ログインが必要なアプリで、次回起動時にログインを省略するためのAPIキー
+②　マスターデータ
 
-③　マスターデータ
+③　ユーザーまたはアプリ運営者が継続的に投稿しているコンテンツ
 
-④　ユーザーまたはアプリ運営者が継続的に投稿しているコンテンツ
-
-⑤　④のコンテンツのキャッシュ
+④　③のコンテンツのキャッシュ
 
 **（９）以下の要件を満たすデータ群を、enumを用いて実際のコードで書いてください。**
 
@@ -305,7 +303,7 @@ object CachedTypeFaces {
 
 **（１０）以下のURLのJSONをdata classに直したコードを書いてください。data classが複数ある際、それぞれの役割について簡単な説明をコメントで入れてください。**
 
-> http://cs367.xbit.jp/~w065038/app/winas/day5/list-with-error-code.json
+> http://cs367.xbit.jp/~w065038/app/winas/list-with-error-code.json
 
 ```kotlin
 // TODO : ここにコードを記述してください
@@ -416,8 +414,13 @@ data class Content(
     var text: String = ""
 )
 class ContentActivity : Activity() {
-    var content: Content? = null
-    // TODO : contentが設定されない場合の代替処理
+    companion object {
+        private const val EXTRA_CONTENT = "EXTRA_CONTENT"
+        private const val EXTRA_CONTENT_ID = "EXTRA_CONTENT_ID"
+    }
+    private var content: Content by Delegates.observable(Content()) { _, _, _ ->
+        updateView()
+    }
     
     private val textView: TextView?
         get() = findViewById<TextView>(R.id.text_view) as? TextView
@@ -426,16 +429,17 @@ class ContentActivity : Activity() {
         setContentView(R.layout.activity_content)
         // TODO : contentを取得してnullの場合の代替処理
     }
+    // TODO : contentが設定されない場合の代替処理
 }
 class ContentRepository {
-    fun getHospital(
-        hospitalId: Int,
-        completion: (hospital: Hospital) -> Unit,
+    fun getContent(
+        contentId: Int,
+        completion: (content: Content) -> Unit,
         failure: () -> Unit
     ) {
         // API通信でのデータ取得処理は省略
         let content = Content()
-        content.id = 1234
+        content.id = contentId
         content.name = "テストコンテンツ"
         completion(content)
     }
