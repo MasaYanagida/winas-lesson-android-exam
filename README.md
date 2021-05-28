@@ -2,8 +2,18 @@
 ## Day1
 
 **（１）モバイルアプリを開発する上で、設計上留意すべき点はどこになるか、サーバサイドやフロントエンドとの違いの観点から説明してください。**
+（１） Answer:
+```
+When designing an app, we have to first consider the target user of our app. Accoding to target user, we have to think about app side and server side. App should respond faster. So there should not be complex process in server side to process and return data to App.
+In app, side, caching etc. should be considered to handle different cases. In app side, we also should consider the frequency of calling API so that server doesn't get overhelmed with network call.
+Also the architecture also should be considered so that project doesn't get complex.
+```
 
 **（２）Activityへの過度な依存や類似/同一コードの重複を避けるため、コード設計上どのような対策をとることが望ましいか、プレゼンテーション層（View）と処理・ビジネスロジック（Controller）それぞれの観点から説明してください。**
+（２） Answer:
+```
+In code designing, decaoupling of classes shoulld be considered. Architecture design should be robust so that, classes doesn't get much dependent. Separating classes according to single responsibility will make the app more maintenable, testable, reusable. Business logic, presentation logic, data process logic, all these thing should be separated.
+```
 
 ## Day2
 
@@ -278,7 +288,8 @@ class TargetActivity : Activity() {
 > - `SampleView`にデータ（`Content`）を設定したら、`textView`にデータの`text`を表示させること
 > - `SampleView`の`update()`関数を呼び出したら、`textView`に表示される情報を更新すること
 
-```kotlin
+```
+//kotlin
 data class Content(
     var id: Int = 0,
     var text: String = ""
@@ -328,7 +339,8 @@ class SampleView : FrameLayout {
 > - `imageView3`にenum`BrandIcon`を使ってアイコンフォントの画像を設定すること
 > - `imageView4`にOSS`Picasso`を使って、画像URL "https://sample.com/sample.jpg" を読み込むこと
 
-```kotlin
+```
+//kotlin
 class MainActivity : Activity() {
     private val imageView1: ImageView?
         get() = findViewById<ImageView>(R.id.image_view_1) as? ImageView
@@ -459,12 +471,28 @@ object CachedTypeFaces {
 **（８）下記の各データを保存するとき、どのような手法を用いて要件を満たせば良いか、その理由も含めて説明してください。**
 
 ①　アプリのインストール後チュートリアルの閲覧が完了したかどうかのフラグ
+（８）①　Answer:
+```
+I will save it to app local SharedPreference storage. Because it is related to app install, so when user installs the app, it will be stored only for first time. And will be deleted with app uninstall.
+```
 
 ②　マスターデータ
+（８）②　Answer:
+```
+I will put master data in files (like json or text) and put them in asset folder. When app first starts or data is not available, then will read from asset. As the master data will not change during app lifetime (at least unless next update), so i will put them as file in asset.
+```
 
 ③　ユーザーまたはアプリ運営者が継続的に投稿しているコンテンツ
+（８）③　Answer:
+```
+As these data will update continuously, i will prefer them  to store in server and access them through API. Because these data is needed to be saved even after user deletes cache or uninstalls app and reinstall, so they should be keept in a non-losing manner.
+```
 
 ④　③のコンテンツのキャッシュ
+（８）④　Answer:
+```
+For caching server contents, i would prefer local database like Room, Realm etc. Because there are time lags in fetching data from server also error prone. So, to display UI in a good looking style, we will use those cached data. And i think local database will be better fit for that purpose
+```
 
 **（９）以下の要件を満たすデータ群を、enumを用いて実際のコードで書いてください。**
 
@@ -479,19 +507,60 @@ object CachedTypeFaces {
 |ID|1 |2 |0 |
 |名前 |男性 |女性 |不明 |
 
-```kotlin
-// TODO : ここにコードを記述してください
+```
+//kotlin
+enum class Gender(val ID: Int) {
+    UNKNOWN(0), MALE(1), FEMALE(2);
+    val name: String
+        get() {
+            return when (this) {
+                UNKNOWN -> "Unknown"
+                MALE -> "Male"
+                FEMALE -> "Female"
+            }
+        }
+    companion object {
+        fun valueOf(ID: Int): Gender? = values().find { it.ID == ID }
+        
+        fun convert(gender: Gender): Gender {
+            return when(gender) {
+                MALE -> FEMALE
+                FEMALE -> MALE
+                UNKNOWN -> UNKNOWN
+            }
+        }
+    }
+}
 ```
 
 **（１０）以下のURLのJSONをdata classに直したコードを書いてください。data classが複数ある際、それぞれの役割について簡単な説明をコメントで入れてください。**
 
 > http://cs367.xbit.jp/~w065038/app/winas/list-with-error-code.json
 
-```kotlin
-// TODO : ここにコードを記述してください
+```
+//kotlin
+//This class will hold inner data of json response
+data class Employee(
+    var id: Int = 0,
+    val name: String = "",
+    val address: String = "",
+    var gender: Int = Gender.UNKNOWN.ID
+)
+
+//This class will hold outer data of response json
+data class EmployeeResponse(
+    val data: List<Employee>,
+    val error_code: Int,
+    val total_count: Int
+)
 ```
 
 **（１１）データの取得と加工を、それが必要とする箇所（Activity側など）ではなく、仲介クラスやメソッド（講座では`Repository`という名前をつけたクラスを使った）を使って行ったほうが良い理由をわかりやすく説明してください。**
+
+（１１）Answer:
+```
+Repository class is responsible to provide data (both from remote and local). It is beneficial to use Repository class instead of using data acquiring stuff in Activity/Fragment side. it decaouples the data fetch logic and makes classess more independent, reusable, maintenable, testable. It also encourages the concept of "Single responsibility" of class
+```
 
 **（１２）以下の要件を満たすデータをAndroidXのRoomでローカル保存するために必要なコードを「すべて」書いてください。**
 
@@ -504,14 +573,45 @@ object CachedTypeFaces {
 |name|String|name|
 |genderId|Int|gender_id|
 
-```kotlin
-// TODO : ここにコードを記述してください
+```
+//kotlin
+@Entity(
+    tableName = "contents",
+    indices = []
+)
+data class Content (
+    @PrimaryKey @ColumnInfo(name = "id") var id: Int = 0,
+    @ColumnInfo(name = "name") val name: String = "",
+    @ColumnInfo(name = "gender_id") var genderId: Int = Gender.UNKNOWN.ID
+)
+
+@Dao
+interface ContentDao {
+    @Query("SELECT * FROM contents")
+    fun getAllContents(): Flow<List<Content>>
+
+    @Insert
+    fun addAll(data: List<Content>)
+}
+
+@Database(entities = [Content::class], version = 1)
+@TypeConverters(Converters::class)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun contentDao(): ContentDao
+}
 ```
 
 **（１３）サーバAPIからJSONデータを取得して、モデルクラスの形で呼び出し元まで返す過程を、準備のための実装フローも含めて、箇条書きでできるだけ詳しく、ロジックフローで説明してください。なお、ライブラリはRetrofit, OkHttp, Moshiを使うものとします。**
 
 >例：　Step1: XXクラスをXXライブラリの仕様に沿うよう、XXする。  
 >　　　Step2: XXデータをXXライブラリのXXメソッドを使ってXXする。
+
+(13) Answer
+```
+Step1: use Retrofit to get data from remote server. This library is a tYPE-SAFE client library which uses OkHttp for network call.
+Step2: Do original network call using OkHttp. OkHttp is another networking library who is responsible to establish connection with server and fetch data stream.
+Step3: Convert JSON to data. Use Moshi in Retrofit client builder to convert JSON data into data model class. Moshi library is responsible for converting JSON into model class
+```
 
 ## Day5
 
