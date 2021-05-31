@@ -9,9 +9,15 @@ A:
 　・複数画面を跨いだりする機能は、Service/Manager/Helperを活用する。
 ```
 
-**（２）Activityへの過度な依存や類似/同一コードの重複を避けるため、コード設計上どのような対策をとることが望ましいか、プレゼンテーション層（View）と処理・ビジネスロジック（Controller）それぞれの観点から、実際のコード例を挙げて説明してください。**
+**（２）Activityへの過度な依存や類似/同一コードの重複を避けるため、コード設計上どのような対策をとることが望ましいか、プレゼンテーション層（View）と処理・ビジネスロジック（Controller）それぞれの観点から説明してください。**
+```
+プレゼンテーション層（View）
+Viewが複雑になったり他のViewでも共通で利用したい場合には、
+カスタムビューやフラグメントを作り、画面内のUI部品を分割する
 
-
+処理・ビジネスロジック（Controller）
+複数画面をまたいだり、アプリ内の随所で使う機能で、Service/Manager/Helperを活用する
+```
 
 ## Day2
 
@@ -78,6 +84,32 @@ A:
 ```
 
 ③　親ビューの下部に横幅`100%`、高さは可変サイズのTextViewを配置し、その上部にwidth `100dp`、height `100dp`のViewを左右の中央にそろえたレイアウト。
+```
+A.
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/linear_layout_activity"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+        android:layout_above="@+id/image_view1"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:background="#b0dc03"
+        />
+
+    <TextView
+        android:id="@+id/image_view2"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:background="#031cd3"
+        android:layout_below="@+id/image_view1"
+        />
+
+</RelativeLayout>
+```
+
 
 **（４）以下のコードのTODO箇所を埋める形で、ActivityのContentViewの各Viewコンポーネントをプロパティアクセスで参照するコードを、①findViewByIdを使う方法、②ViewBindingを使う方法それぞれで書いてください。
 その際、下記の要件に従うこと。**
@@ -110,7 +142,8 @@ interface ViewBindable {
 
 ## Day3
 
-**（５）以下のコードのTODO箇所を埋める形で、①Activityが新しい別のActivityを呼び出した際にデータを渡し、②呼び出されたActivityが閉じられる際に古いActivityにデータを渡すコードを書いてください。なお、コード中に使われるIDコードは、コード内にあるenumを使用すること。**
+**（５）以下のコードのTODO箇所を埋める形で、①Activityが新しい別のActivityを呼び出した際にデータ（Contentデータ）を渡し、②呼び出されたActivityが閉じられる際に古いActivityにデータ(Int型の数値)を渡すコードを書いてください。なお、コード中に使われるIDは、コード内にあるenumを使用すること。**
+
 
 ```kotlin
 data class Content(
@@ -190,7 +223,7 @@ class TargetActivity : Activity() {
 
 **（６）以下のコードのTODO箇所を埋めて、Activity（呼び出し側）とカスタムビューとの間での処理のやりとりを実現するコードを書いてください。その際、下記の条件を満たすこと。**
 
-> - `SampleView`に`listener`を設定して、ボタンがタップされた際にUIViewController側でイベントを受け取るようにすること
+> - `SampleView`に`listener`を設定して、ボタンがタップされた際にActivity側でイベントを受け取るようにすること
 > - `SampleView`にデータ（`Content`）を設定したら、`textView`にデータの`text`を表示させること
 > - `SampleView`の`update()`関数を呼び出したら、`textView`に表示される情報を更新すること
 
@@ -374,14 +407,33 @@ object CachedTypeFaces {
 **（８）下記の各データを保存するとき、どのような手法を用いて要件を満たせば良いか、その理由も含めて説明してください。**
 
 ①　アプリのインストール後チュートリアルの閲覧が完了したかどうかのフラグ
+```
+A.
+SharedPreferences
+Key-Value形式で管理可能な値は、SharedPreferencesがもっとも簡単に利用できるため。
+```
 
-②　ログインが必要なアプリで、次回起動時にログインを省略するためのAPIキー
+②　マスターデータ
+```
+A.
+asset内のデータファイル
+更新する必要がないマスタデータを、json等で用意しておくことで、
+DBを利用するよりも手軽に利用可能であるため。
+```
 
-③　マスターデータ
+③　ユーザーまたはアプリ運営者が継続的に投稿しているコンテンツ
+```
+A.
+サーバ通信（APIでデータ取得）
+サーバーにデータを保持することで、アプリ運営者はアプリ自体には変更を加えずに、コンテンツの更新ができるから
+```
 
-④　ユーザーまたはアプリ運営者が継続的に投稿しているコンテンツ
-
-⑤　④のコンテンツのキャッシュ
+④　③のコンテンツのキャッシュ
+```
+A.
+ローカルデータベース (ROOM等）
+一度取得したデータをローカルデータベースに格納しておくことで、通信を発生させずに高速に処理が可能であるため
+```
 
 **（９）以下の要件を満たすデータ群を、enumを用いて実際のコードで書いてください。**
 
@@ -398,17 +450,64 @@ object CachedTypeFaces {
 
 ```kotlin
 // TODO : ここにコードを記述してください
+class Gender {
+    companion object {
+        val instance = Gender()
+    }
+    
+    enum class Key(val id: Int) {
+        MALE(1),
+        FEMALE(2),
+        UNKNOWN(3)
+    }
+    
+    fun name(id: Int):String {
+        return when (id) {
+            Key.MALE.id -> "男性"
+            Key.FEMALE.id -> "女性"
+            Key.UNKNOWN.id -> "不明"
+            else -> ""
+        }
+    }
+    
+    fun convert(id: Int):String {
+        return when (id) {
+            Key.MALE.id -> "女性"
+            Key.FEMALE.id -> "男性"
+            Key.UNKNOWN.id -> "不明"
+            else -> ""
+        }
+    }
+}
 ```
 
 **（１０）以下のURLのJSONをdata classに直したコードを書いてください。data classが複数ある際、それぞれの役割について簡単な説明をコメントで入れてください。**
 
-> http://cs367.xbit.jp/~w065038/app/winas/day5/list-with-error-code.json
+> http://cs367.xbit.jp/~w065038/app/winas/list-with-error-code.json
 
 ```kotlin
 // TODO : ここにコードを記述してください
+// Json全体をマッピングするクラス
+data class Result(
+    val datas: List<data>,
+    val total_count: Int,
+    val error_code: Int
+)
+// Json中のdataのListの1要素をマッピングするクラス
+data class Data(
+    val id: Int,
+    val name: String,
+    val address: String,
+    val gender: Int
+)
+
 ```
 
 **（１１）データの取得と加工を、それが必要とする箇所（Activity側など）ではなく、仲介クラスやメソッド（講座では`Repository`という名前をつけたクラスを使った）を使って行ったほうが良い理由をわかりやすく説明してください。**
+```
+Activityがデータの取得先を意識しなくても良くすることで、可読性を向上させることができるため。
+データはサーバー側にあったり、ローカルのデータベースにあったり、メモリ内で保持していたりと保存場所だけでも様々なケースがあるが、データの取得先についてActivityが意識しなくてもRepositoryに責任を持たせる構造にすることができる。
+```
 
 **（１２）以下の要件を満たすデータをAndroidXのRoomでローカル保存するために必要なコードを「すべて」書いてください。**
 
@@ -423,12 +522,55 @@ object CachedTypeFaces {
 
 ```kotlin
 // TODO : ここにコードを記述してください
+@Database(entities = [Content::class], version = 1)
+@TypeConverters(Converters::class)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun contentDao(): ContentDao
+}
+
+@Entity(tableName = "contents")
+data class ContentEntity(
+    @PrimaryKey @ColumnInfo(name = "id") var id: Int
+    @ColumnInfo(name = "name") var name: String
+    @ColumnInfo(name = "gender_id") var genderId: Int
+)
+
+@Dao
+interface ContentDao {
+    @Query("SELECT * FROM contents")
+    fun getAllContents(): Flow<List<Content>>
+
+    @Query("DELETE FROM contents")
+    fun deleteAll()
+
+    @Insert
+    fun add(data: Content)
+
+    @Insert
+    fun addAll(data: List<Content>)
+}
+
+class Repository {
+    companion object {
+        val localDb = Room.databaseBuilder(
+            App.context,
+            AppDatabase::class.java, "sample-database"
+        ).build()
+    }
+}
 ```
 
 **（１３）サーバAPIからJSONデータを取得して、モデルクラスの形で呼び出し元まで返す過程を、準備のための実装フローも含めて、箇条書きでできるだけ詳しく、ロジックフローで説明してください。なお、ライブラリはRetrofit, OkHttp, Moshiを使うものとします。**
 
 >例：　Step1: XXクラスをXXライブラリの仕様に沿うよう、XXする。  
 >　　　Step2: XXデータをXXライブラリのXXメソッドを使ってXXする。
+```
+Step1: HeaderInterceptorクラスをInterceptorインターフェースに合わせて作成
+Step2: ResponseInterceptorクラスをInterceptorインターフェースに合わせて作成
+Step3: ModelクラスをMoshiライブラリの仕様に合わせて作成
+Step4: OkHttpClientを、HeaderInterceptorクラスとResponseInterceptorを使用して呼び出し
+Step5: レスポンスのjsonをMoshiでModelクラスにマッピングする
+```
 
 ## Day5
 
@@ -443,6 +585,11 @@ val apiInterface = Retrofit
         MoshiConverterFactory.create(
             Moshi.Builder()
                 // TODO
+                .add(PolymorphicJsonAdapterFactory.of(FeedableItem::class.java, "content_type")
+                    .withSubtype(Restaurant::class.java, FeedContentType.Restraunt.index)
+                    .withSubtype(Hospital::class.java, FeedContentType.Hospital.index)
+                )
+
                 .add(KotlinJsonAdapterFactory())
                 .build()
         )
@@ -452,6 +599,9 @@ val apiInterface = Retrofit
     .baseUrl("http://cs367.xbit.jp/~w065038/app/winas/day5/")
     .build()
     .create(SampleApiService::class.java)
+
+sealed class FeedableItem
+
 data class Restaurant(
     var id: Int = 0,
     var name: String = ""): Feedable {}
@@ -466,16 +616,45 @@ interface Feedable {
 }
 interface SampleApiService {
     // TODO: 任意のサンプル用APIを定義すること
+    @GET("list-adr.json")
+    fun getList(): Deferred<Response<List<FeedableItem>>>
 }
 fun getList(
     completion: (contents: List</* TODO */>) -> Unit,
     failure: () -> Unit
     ) {
     // TODO: ここで実際にAPIを呼んでデータに変換する
+        val response = Repository.apiInterface.getList()
+        GlobalScope.async {
+            response.await()
+            Handler(Looper.getMainLooper()).post {
+                val response = response.getCompleted()
+                if (response.isSuccessful) {
+                    val data = response.body()
+                    if (data != null) {
+                        completion(data)
+                    } else {
+                        failure()
+                    }
+                } else {
+                    failure()
+                }
+            }
+        }
+    }
 }
 getList(
     completion = { contents ->
         // TODO: ここで結果が返るようにする
+
+        contents.forEach { content ->
+            when (content) {
+                is Restaurant -> Timber.d("[SERVER] list Restaurant name= ${content.name}")
+                is Hospital -> Timber.d("[SERVER] list Hospital name= ${content.name}")
+            }
+        }
+        items = contents
+
     }, failure = {
         // do nothing
     }
@@ -499,6 +678,11 @@ class SampleCustomView: FrameLayout {
     var data: ??? // TODO: 型名、textViewに`name`を表示させること
     private val textView: TextView?
         get() = findViewById<TextView>(R.id.text_view) as? TextView
+
+
+```
+   textView.text = name 
+```
 }
 ```
 **（１６）あるActivityが、プロパティに指定されたモデルデータに基づいてUIを構築・表示する役割を持っていた場合について考えます。**
@@ -513,8 +697,13 @@ data class Content(
     var text: String = ""
 )
 class ContentActivity : Activity() {
-    var content: Content? = null
-    // TODO : contentが設定されない場合の代替処理
+    companion object {
+        private const val EXTRA_CONTENT = "EXTRA_CONTENT"
+        private const val EXTRA_CONTENT_ID = "EXTRA_CONTENT_ID"
+    }
+    private var content: Content by Delegates.observable(Content()) { _, _, _ ->
+        updateView()
+    }
     
     private val textView: TextView?
         get() = findViewById<TextView>(R.id.text_view) as? TextView
@@ -523,16 +712,17 @@ class ContentActivity : Activity() {
         setContentView(R.layout.activity_content)
         // TODO : contentを取得してnullの場合の代替処理
     }
+    // TODO : contentが設定されない場合の代替処理
 }
 class ContentRepository {
-    fun getHospital(
-        hospitalId: Int,
-        completion: (hospital: Hospital) -> Unit,
+    fun getContent(
+        contentId: Int,
+        completion: (content: Content) -> Unit,
         failure: () -> Unit
     ) {
         // API通信でのデータ取得処理は省略
         let content = Content()
-        content.id = 1234
+        content.id = contentId
         content.name = "テストコンテンツ"
         completion(content)
     }
@@ -548,6 +738,15 @@ class SampleActivity : Activity() {
     private var counter: Int = 0
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (null != savedInstanceState) {
+            counter  = savedInstanceState.getInt("counter");
+        }
+    }
+    @Override
+    protected void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putBoolean("counter", counter);
     }
 }
 ```
