@@ -240,6 +240,12 @@ class MainActivity : Activity() {
         setContentView(R.layout.activity_main)
         val content = Content(id = 1234, text = "test content")
         // TODO
+        view.content = content
+        view.update
+
+        override fun onButtonClicklistener(view: SampleView) {
+            showToast("SampleHeaderView IconTapped!!")
+        }
     }
 }
 class SampleView : FrameLayout {
@@ -249,8 +255,16 @@ class SampleView : FrameLayout {
         get() = findViewById<TextView>(R.id.text_view) as? TextView
     constructor(context: Context) : super(context) {
         // TODO
+        button?.setOnClickListener {
+            fun onButtonClicklistener(this)
+        }
     }
     // TODO
+    var content: Content
+
+    fun update() {
+        textView.text = content.text
+    }
 }
 ```
 
