@@ -180,7 +180,6 @@ class MainActivity : Activity(), ViewBindable {
     override lateinit var binding: ViewBinding
     private val findViewByIdView: View?
         get() = findViewById<View>(R.id.view)
-        findViewById<Button>(R.id.button) as? Button
     private val viewBindingView: View?
         get() = (binding as? MainActivityBinding)?.view
 
@@ -239,8 +238,6 @@ enum class ActivityExtraData(val key: String) {
 class MainActivity : Activity() {
     private val button: Button?
         get() = findViewById<Button>(R.id.button) as? Button
-    var number: Int? = null
-    var content: Content? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -315,7 +312,9 @@ class SampleView : FrameLayout {
     private val button: Button?
         get() = findViewById<Button>(R.id.text_view) as? Button
     var listener: ClickListener? = null
-    var content: Content? =  null
+    var content: Content? by Delegates.observable(null) { _, _, _ ->
+        update()
+    }
     
     constructor(context: Context) : super(context) {
         button?.setOnClickListener {
@@ -354,7 +353,30 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        // TODO
+        
+        //`imageView1`にresourceのdrawableから "icon" を設定すること
+        imageView1.setImageResource(R.drawable.icon)
+        
+        `imageView2`にassetから画像ファイル "icon2.png" を読み込み、Bitmapとして設定すること
+        try {
+            val inputStream = assets.open("icon2.png")
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            imageView2?.setImageBitmap(bitmap)
+        } catch (e: Exception) {
+            imageView2?.setImageResource(R.drawable.arrow_background)
+        }
+        
+        `imageView3`にenum`BrandIcon`を使ってアイコンフォントの画像を設定すること
+        imageView3.setImageDrawable(BrandIconDrawable.create(this, BrandIcon.INSTAGRAM, 20.pixel))
+        
+        `imageView4`にOSS`Picasso`を使って、画像URL "https://sample.com/sample.jpg" を読み込むこと
+        Handler().postDelayed({
+            imageView4?.let {
+                Picasso.get()
+                    .load("https://sample.com/sample.jpg")
+                    .into(it)
+            }
+        }, 500L)
     }
 }
 enum class BrandIcon(val key: Int) {
@@ -509,7 +531,7 @@ For caching server contents, i would prefer local database like Room, Realm etc.
 
 ```
 //kotlin
-enum class Gender(val ID: Int) {
+enum class Gender(val id: Int) {
     UNKNOWN(0), MALE(1), FEMALE(2);
     val name: String
         get() {
@@ -520,7 +542,7 @@ enum class Gender(val ID: Int) {
             }
         }
     companion object {
-        fun valueOf(ID: Int): Gender? = values().find { it.ID == ID }
+        fun valueOf(id: Int): Gender? = values().find { it.id == id }
         
         fun convert(gender: Gender): Gender {
             return when(gender) {
@@ -550,8 +572,8 @@ data class Employee(
 //This class will hold outer data of response json
 data class EmployeeResponse(
     val data: List<Employee>,
-    val error_code: Int,
-    val total_count: Int
+    @Json(name = "error_code") val errorCode: Int,
+    @Json(name = "total_count") val totalCount: Int
 )
 ```
 
@@ -598,6 +620,23 @@ interface ContentDao {
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun contentDao(): ContentDao
+    
+    companion object {
+        fun getInstance(): AppDatabase {
+            return Room.databaseBuilder(
+                App.context,
+                AppDatabase::class.java,
+                "sample-database"
+            ).build()
+        }
+    }
+}
+
+//Fetch data
+AppDatabase.getInstance().contentDao().getAllContents().collect {
+    it.forEach { content ->
+        Timber.d("Local content data = $content")
+    }
 }
 ```
 
@@ -625,7 +664,10 @@ val apiInterface = Retrofit
     .addConverterFactory(
         MoshiConverterFactory.create(
             Moshi.Builder()
-                // TODO
+                .add(PolymorphicJsonAdapterFactory.of(Feedable::class.java, "content_type")
+                            .withSubtype(Restaurant::class.java, FeedContentType.Restraunt.index)
+                            .withSubtype(Hospital::class.java, FeedContentType.Hospital.index)
+                        )
                 .add(KotlinJsonAdapterFactory())
                 .build()
         )
@@ -637,10 +679,16 @@ val apiInterface = Retrofit
     .create(SampleApiService::class.java)
 data class Restaurant(
     var id: Int = 0,
-    var name: String = ""): Feedable {}
+    var name: String = ""): Feedable {
+    override val feedContentType: FeedContentType
+        get() = FeedContentType.Restraunt
+}
 data class Hospital (
     var id: Int = 0,
-    var name: String = ""): Feedable {}
+    var name: String = ""): Feedable {
+    override val feedContentType: FeedContentType
+        get() = FeedContentType.Hospital
+}
 enum class FeedContentType(val index: String) {
     Hospital("hospital"), Restraunt("restaurant")
 }
@@ -648,17 +696,34 @@ interface Feedable {
     val feedContentType: FeedContentType
 }
 interface SampleApiService {
-    // TODO: 任意のサンプル用APIを定義すること
+    @GET("list-adr.json")
+    fun getList(): Deferred<Response<List<FeedableItem>>>
 }
 fun getList(
-    completion: (contents: List</* TODO */>) -> Unit,
+    completion: (contents: List<Feedable>) -> Unit,
     failure: () -> Unit
     ) {
-    // TODO: ここで実際にAPIを呼んでデータに変換する
+    val response = Repository.apiInterface.getList()
+        GlobalScope.async {
+            response.await()
+            Handler(Looper.getMainLooper()).post {
+                val response = response.getCompleted()
+                if (response.isSuccessful) {
+                    val data = response.body()
+                    if (data != null) {
+                        completion(data)
+                    } else {
+                        failure()
+                    }
+                } else {
+                    failure()
+                }
+            }
+        }
 }
 getList(
     completion = { contents ->
-        // TODO: ここで結果が返るようにする
+        items = contents
     }, failure = {
         // do nothing
     }
@@ -679,7 +744,19 @@ interface Animal {
     val name: String
 }
 class SampleCustomView: FrameLayout {
-    var data: ??? // TODO: 型名、textViewに`name`を表示させること
+    ジェネリクスを使った場合
+    var data: Animal? by Delegates.observable(null) {_, _, _ ->
+        textView?.text = data?.name
+    }
+
+    ジェネリクスを使わない場合
+    var cat: Cat? by Delegates.observable(null) {_, _, _ ->
+        textView?.text = cat?.name
+    }
+    //Or
+    var dog: Dog? by Delegates.observable(null) {_, _, _ ->
+        textView?.text = dog?.name
+    }
     private val textView: TextView?
         get() = findViewById<TextView>(R.id.text_view) as? TextView
 }
@@ -687,6 +764,8 @@ class SampleCustomView: FrameLayout {
 **（１６）あるActivityが、プロパティに指定されたモデルデータに基づいてUIを構築・表示する役割を持っていた場合について考えます。**
 
 ①　その「モデルデータ」がnullになるケースとしてどのようなケースが考えられるか。わかりやすく説明してください。
+Answer ①:
+モーデルデータがnullになるケースであれば、UIにユーザーか分かるようにDefaultのテキストを表示します。最初はCacheからもらったデータや「Loading...」などのテキストを表示します。もらったデータはNULLであればその時にエラーメッセージとかを表示します。
 
 ②　モデルデータがnullであった場合、どのようにして代替処理を行うか、以下のコードのTODO箇所を埋める形でコードを書いてください。
 
@@ -709,9 +788,9 @@ class ContentActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_content)
-        // TODO : contentを取得してnullの場合の代替処理
+        textView?.text = "データの取得エラーです。しばらく時間をおいてから再度アクセスしてください。"
     }
-    // TODO : contentが設定されない場合の代替処理
+    textView?.text = "Loading..."
 }
 class ContentRepository {
     fun getContent(
@@ -737,7 +816,16 @@ class SampleActivity : Activity() {
     private var counter: Int = 0
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        counter = savedInstanceState?.getInt(PROP_COUNTER) ?: 0
+    }
+
+    companion object {
+        private const val PROP_COUNTER = "PROP_COUNTER"
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt(PROP_COUNTER, counter)
     }
 }
 ```
-
