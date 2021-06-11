@@ -533,6 +533,21 @@ For caching server contents, i would prefer local database like Room, Realm etc.
 //kotlin
 enum class Gender(val id: Int) {
     UNKNOWN(0), MALE(1), FEMALE(2);
+    
+    fun convert(): Gender {
+        return when {
+            this == MALE -> {
+                FEMALE
+            }
+            this == FEMALE -> {
+                MALE
+            }
+            else -> {
+                UNKNOWN
+            }
+        }
+    }
+
     val name: String
         get() {
             return when (this) {
@@ -541,17 +556,6 @@ enum class Gender(val id: Int) {
                 FEMALE -> "Female"
             }
         }
-    companion object {
-        fun valueOf(id: Int): Gender? = values().find { it.id == id }
-        
-        fun convert(gender: Gender): Gender {
-            return when(gender) {
-                MALE -> FEMALE
-                FEMALE -> MALE
-                UNKNOWN -> UNKNOWN
-            }
-        }
-    }
 }
 ```
 
