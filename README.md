@@ -4,15 +4,13 @@
 **（１）モバイルアプリを開発する上で、設計上留意すべき点はどこになるか、サーバサイドやフロントエンドとの違いの観点から説明してください。**
 （１） Answer:
 ```
-When designing an app, we have to first consider the target user of our app. Accoding to target user, we have to think about app side and server side. App should respond faster. So there should not be complex process in server side to process and return data to App.
-In app, side, caching etc. should be considered to handle different cases. In app side, we also should consider the frequency of calling API so that server doesn't get overhelmed with network call.
-Also the architecture also should be considered so that project doesn't get complex.
+When designing mobile application, it's little different than web app design. Because in the case of web, the pages are not aware of the whole system. Only some information is inherited between pages by cookies and URL parameters. But in the case of Mobile app, Apps need to know all the data, the flow of information, and the actions of users within their own processes. Server side and Mobile app side is different in design sense. Server side is responsible for storing and providing data in the means of API etc. App side is responsible for fetching, modifying, storing data communicating server, and also serving these data to users through UI. So, these points should be kep in mind while designing Mobile application.
 ```
 
 **（２）Activityへの過度な依存や類似/同一コードの重複を避けるため、コード設計上どのような対策をとることが望ましいか、プレゼンテーション層（View）と処理・ビジネスロジック（Controller）それぞれの観点から説明してください。**
 （２） Answer:
 ```
-In code designing, decaoupling of classes shoulld be considered. Architecture design should be robust so that, classes doesn't get much dependent. Separating classes according to single responsibility will make the app more maintenable, testable, reusable. Business logic, presentation logic, data process logic, all these thing should be separated.
+In code designing, decaoupling of classes shoulld be considered. Architecture design should be robust so that, classes doesn't get much dependent. Separating classes according to single responsibility will make the app more maintenable, testable, reusable. Business logic, presentation logic, data process logic, all these thing should be separated. Presentation layer (View) should be responsible for displaying data and taking user actions. And if there is any possibility of repeating same view more than one place, then Custom view or fragment should be used. Common business logics that will be repeated in several clasees, that should not be in activity or fragment, they can reside in Service/Manager/Helper utils kind classes. Android framework related code will reside in Controllers (Activity or Fragment class).
 ```
 
 ## Day2
@@ -59,84 +57,23 @@ In code designing, decaoupling of classes shoulld be considered. Architecture de
 
 （３）② Answer:
 ```
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:layout_marginTop="10dp"
-    android:layout_marginBottom="10dp"
-    android:layout_marginStart="10dp"
-    android:layout_marginEnd="10dp">
+    android:layout_height="match_parent">
 
-    <LinearLayout
+    <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:layout_margin="10dp"
+        android:background="@android:color/holo_green_dark" />
 
-        <View
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:background="@android:color/holo_red_dark"/>
+    <View
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center"
+        android:background="@android:color/holo_red_dark" />
 
-        <View
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:background="@android:color/holo_green_dark"/>
-
-        <View
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:background="@android:color/holo_blue_dark"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <View
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:background="@android:color/darker_gray"/>
-
-        <View
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:background="@android:color/black"/>
-
-        <View
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:background="@android:color/holo_orange_dark"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal">
-
-        <View
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:background="@android:color/holo_purple"/>
-
-        <View
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:background="@android:color/holo_green_light"/>
-
-        <View
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:background="@android:color/holo_red_light"/>
-
-    </LinearLayout>
-
-</LinearLayout>
+</FrameLayout>
 ```
 
 ③　親ビューの下部に横幅`100%`、高さは可変サイズのTextViewを配置し、その上部にwidth `100dp`、height `100dp`のViewを左右の中央にそろえたレイアウト。
@@ -180,7 +117,6 @@ class MainActivity : Activity(), ViewBindable {
     override lateinit var binding: ViewBinding
     private val findViewByIdView: View?
         get() = findViewById<View>(R.id.view)
-        findViewById<Button>(R.id.button) as? Button
     private val viewBindingView: View?
         get() = (binding as? MainActivityBinding)?.view
 
@@ -239,8 +175,6 @@ enum class ActivityExtraData(val key: String) {
 class MainActivity : Activity() {
     private val button: Button?
         get() = findViewById<Button>(R.id.button) as? Button
-    var number: Int? = null
-    var content: Content? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -288,6 +222,7 @@ class TargetActivity : Activity() {
 > - `SampleView`にデータ（`Content`）を設定したら、`textView`にデータの`text`を表示させること
 > - `SampleView`の`update()`関数を呼び出したら、`textView`に表示される情報を更新すること
 
+（６）Answer:
 ```
 //kotlin
 data class Content(
@@ -315,7 +250,9 @@ class SampleView : FrameLayout {
     private val button: Button?
         get() = findViewById<Button>(R.id.text_view) as? Button
     var listener: ClickListener? = null
-    var content: Content? =  null
+    var content: Content? by Delegates.observable(null) { _, _, _ ->
+        update()
+    }
     
     constructor(context: Context) : super(context) {
         button?.setOnClickListener {
@@ -339,6 +276,7 @@ class SampleView : FrameLayout {
 > - `imageView3`にenum`BrandIcon`を使ってアイコンフォントの画像を設定すること
 > - `imageView4`にOSS`Picasso`を使って、画像URL "https://sample.com/sample.jpg" を読み込むこと
 
+（７）Answer:
 ```
 //kotlin
 class MainActivity : Activity() {
@@ -354,7 +292,30 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        // TODO
+        
+        //`imageView1`にresourceのdrawableから "icon" を設定すること
+        imageView1.setImageResource(R.drawable.icon)
+        
+        `imageView2`にassetから画像ファイル "icon2.png" を読み込み、Bitmapとして設定すること
+        try {
+            val inputStream = assets.open("icon2.png")
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            imageView2?.setImageBitmap(bitmap)
+        } catch (e: Exception) {
+            imageView2?.setImageResource(R.drawable.arrow_background)
+        }
+        
+        `imageView3`にenum`BrandIcon`を使ってアイコンフォントの画像を設定すること
+        imageView3.setImageDrawable(BrandIconDrawable.create(this, BrandIcon.INSTAGRAM, 20.pixel))
+        
+        `imageView4`にOSS`Picasso`を使って、画像URL "https://sample.com/sample.jpg" を読み込むこと
+        Handler().postDelayed({
+            imageView4?.let {
+                Picasso.get()
+                    .load("https://sample.com/sample.jpg")
+                    .into(it)
+            }
+        }, 500L)
     }
 }
 enum class BrandIcon(val key: Int) {
@@ -471,24 +432,28 @@ object CachedTypeFaces {
 **（８）下記の各データを保存するとき、どのような手法を用いて要件を満たせば良いか、その理由も含めて説明してください。**
 
 ①　アプリのインストール後チュートリアルの閲覧が完了したかどうかのフラグ
+
 （８）①　Answer:
 ```
 I will save it to app local SharedPreference storage. Because it is related to app install, so when user installs the app, it will be stored only for first time. And will be deleted with app uninstall.
 ```
 
 ②　マスターデータ
+
 （８）②　Answer:
 ```
 I will put master data in files (like json or text) and put them in asset folder. When app first starts or data is not available, then will read from asset. As the master data will not change during app lifetime (at least unless next update), so i will put them as file in asset.
 ```
 
 ③　ユーザーまたはアプリ運営者が継続的に投稿しているコンテンツ
+
 （８）③　Answer:
 ```
 As these data will update continuously, i will prefer them  to store in server and access them through API. Because these data is needed to be saved even after user deletes cache or uninstalls app and reinstall, so they should be keept in a non-losing manner.
 ```
 
 ④　③のコンテンツのキャッシュ
+
 （８）④　Answer:
 ```
 For caching server contents, i would prefer local database like Room, Realm etc. Because there are time lags in fetching data from server also error prone. So, to display UI in a good looking style, we will use those cached data. And i think local database will be better fit for that purpose
@@ -507,10 +472,26 @@ For caching server contents, i would prefer local database like Room, Realm etc.
 |ID|1 |2 |0 |
 |名前 |男性 |女性 |不明 |
 
+（９）Answer:
 ```
 //kotlin
-enum class Gender(val ID: Int) {
+enum class Gender(val id: Int) {
     UNKNOWN(0), MALE(1), FEMALE(2);
+    
+    fun convert(): Gender {
+        return when {
+            this == MALE -> {
+                FEMALE
+            }
+            this == FEMALE -> {
+                MALE
+            }
+            else -> {
+                UNKNOWN
+            }
+        }
+    }
+
     val name: String
         get() {
             return when (this) {
@@ -519,17 +500,6 @@ enum class Gender(val ID: Int) {
                 FEMALE -> "Female"
             }
         }
-    companion object {
-        fun valueOf(ID: Int): Gender? = values().find { it.ID == ID }
-        
-        fun convert(gender: Gender): Gender {
-            return when(gender) {
-                MALE -> FEMALE
-                FEMALE -> MALE
-                UNKNOWN -> UNKNOWN
-            }
-        }
-    }
 }
 ```
 
@@ -537,6 +507,7 @@ enum class Gender(val ID: Int) {
 
 > http://cs367.xbit.jp/~w065038/app/winas/list-with-error-code.json
 
+（１０）Answer:
 ```
 //kotlin
 //This class will hold inner data of json response
@@ -550,8 +521,8 @@ data class Employee(
 //This class will hold outer data of response json
 data class EmployeeResponse(
     val data: List<Employee>,
-    val error_code: Int,
-    val total_count: Int
+    @Json(name = "error_code") val errorCode: Int,
+    @Json(name = "total_count") val totalCount: Int
 )
 ```
 
@@ -573,6 +544,7 @@ Repository class is responsible to provide data (both from remote and local). It
 |name|String|name|
 |genderId|Int|gender_id|
 
+（１2）Answer:
 ```
 //kotlin
 @Entity(
@@ -598,6 +570,23 @@ interface ContentDao {
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun contentDao(): ContentDao
+    
+    companion object {
+        fun getInstance(): AppDatabase {
+            return Room.databaseBuilder(
+                App.context,
+                AppDatabase::class.java,
+                "sample-database"
+            ).build()
+        }
+    }
+}
+
+//Fetch data
+AppDatabase.getInstance().contentDao().getAllContents().collect {
+    it.forEach { content ->
+        Timber.d("Local content data = $content")
+    }
 }
 ```
 
@@ -608,9 +597,9 @@ abstract class AppDatabase : RoomDatabase() {
 
 (13) Answer
 ```
-Step1: use Retrofit to get data from remote server. This library is a tYPE-SAFE client library which uses OkHttp for network call.
-Step2: Do original network call using OkHttp. OkHttp is another networking library who is responsible to establish connection with server and fetch data stream.
-Step3: Convert JSON to data. Use Moshi in Retrofit client builder to convert JSON data into data model class. Moshi library is responsible for converting JSON into model class
+Step1: use Retrofit to get data from remote server. This library is a TYPE-SAFE client library which uses OkHttp for network call. Set API service interface in Retrofit to fetch data. Also set OKHttp client in retrofit.
+Step2: Do original network call using OkHttp. OkHttp is another networking library who is responsible to establish connection with server and fetch data stream. We can also add interceptor in OkHttp client such as HeaderInterceptor for adding header info like basic authorization, Response interceptor for doing work depending response like observing HttpResponseCode and showing data or error, Network interceptor to observe networking problems etc.
+Step3: Convert JSON string to data class. Use Moshi in Retrofit client builder to map JSON string into corresponding data model class. Moshi library is responsible for parsing/decoding JSON string into model class, encode data class into JSON string, data binding etc. We can set our custom Data Transfer Object for adapting data according to response json. We can use Kotlin's interface and generics.
 ```
 
 ## Day5
@@ -619,13 +608,17 @@ Step3: Convert JSON to data. Use Moshi in Retrofit client builder to convert JSO
 
 >  - APIのURLはこちらから `http://cs367.xbit.jp/~w065038/app/winas/day5/list-adr.json`
 
+（１４）Answer:
 ```kotlin
 val apiInterface = Retrofit
     .Builder()
     .addConverterFactory(
         MoshiConverterFactory.create(
             Moshi.Builder()
-                // TODO
+                .add(PolymorphicJsonAdapterFactory.of(Feedable::class.java, "content_type")
+                            .withSubtype(Restaurant::class.java, FeedContentType.Restraunt.index)
+                            .withSubtype(Hospital::class.java, FeedContentType.Hospital.index)
+                        )
                 .add(KotlinJsonAdapterFactory())
                 .build()
         )
@@ -637,10 +630,16 @@ val apiInterface = Retrofit
     .create(SampleApiService::class.java)
 data class Restaurant(
     var id: Int = 0,
-    var name: String = ""): Feedable {}
+    var name: String = ""): Feedable {
+    override val feedContentType: FeedContentType
+        get() = FeedContentType.Restraunt
+}
 data class Hospital (
     var id: Int = 0,
-    var name: String = ""): Feedable {}
+    var name: String = ""): Feedable {
+    override val feedContentType: FeedContentType
+        get() = FeedContentType.Hospital
+}
 enum class FeedContentType(val index: String) {
     Hospital("hospital"), Restraunt("restaurant")
 }
@@ -648,17 +647,34 @@ interface Feedable {
     val feedContentType: FeedContentType
 }
 interface SampleApiService {
-    // TODO: 任意のサンプル用APIを定義すること
+    @GET("list-adr.json")
+    fun getList(): Deferred<Response<List<FeedableItem>>>
 }
 fun getList(
-    completion: (contents: List</* TODO */>) -> Unit,
+    completion: (contents: List<Feedable>) -> Unit,
     failure: () -> Unit
     ) {
-    // TODO: ここで実際にAPIを呼んでデータに変換する
+    val response = Repository.apiInterface.getList()
+        GlobalScope.async {
+            response.await()
+            Handler(Looper.getMainLooper()).post {
+                val response = response.getCompleted()
+                if (response.isSuccessful) {
+                    val data = response.body()
+                    if (data != null) {
+                        completion(data)
+                    } else {
+                        failure()
+                    }
+                } else {
+                    failure()
+                }
+            }
+        }
 }
 getList(
     completion = { contents ->
-        // TODO: ここで結果が返るようにする
+        items = contents
     }, failure = {
         // do nothing
     }
@@ -667,6 +683,7 @@ getList(
 
 **（１５）あるカスタムビュークラスが、プロパティのデータの型によって異なる表示を行うものとします。その際、ジェネリクスを使った場合の実装、使わない場合の実装のコード例を、以下のコードを埋める形でそれぞれ書いてください。**
 
+（１５）Answer:
 ```kotlin
 data class Dog(
     override var id: Int = 0,
@@ -679,7 +696,19 @@ interface Animal {
     val name: String
 }
 class SampleCustomView: FrameLayout {
-    var data: ??? // TODO: 型名、textViewに`name`を表示させること
+    ジェネリクスを使った場合
+    var data: Animal? by Delegates.observable(null) {_, _, _ ->
+        textView?.text = data?.name
+    }
+
+    ジェネリクスを使わない場合
+    var cat: Cat? by Delegates.observable(null) {_, _, _ ->
+        textView?.text = cat?.name
+    }
+    //Or
+    var dog: Dog? by Delegates.observable(null) {_, _, _ ->
+        textView?.text = dog?.name
+    }
     private val textView: TextView?
         get() = findViewById<TextView>(R.id.text_view) as? TextView
 }
@@ -688,8 +717,12 @@ class SampleCustomView: FrameLayout {
 
 ①　その「モデルデータ」がnullになるケースとしてどのようなケースが考えられるか。わかりやすく説明してください。
 
+（１６）① Answer:
+モーデルデータがnullになるケースであれば、UIにユーザーか分かるようにDefaultのテキストを表示します。最初はCacheからもらったデータや「Loading...」などのテキストを表示します。もらったデータはNULLであればその時にエラーメッセージとかを表示します。
+
 ②　モデルデータがnullであった場合、どのようにして代替処理を行うか、以下のコードのTODO箇所を埋める形でコードを書いてください。
 
+（１６）② Answer:
 ```kotlin
 data class Content(
     var id: Int = 0,
@@ -709,9 +742,9 @@ class ContentActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_content)
-        // TODO : contentを取得してnullの場合の代替処理
+        textView?.text = "データの取得エラーです。しばらく時間をおいてから再度アクセスしてください。"
     }
-    // TODO : contentが設定されない場合の代替処理
+    textView?.text = "Loading..."
 }
 class ContentRepository {
     fun getContent(
@@ -732,12 +765,22 @@ class ContentRepository {
 
 **（１７）Activityが破棄されてから復元された際に、プロパティ「counter」のデータも復元されるよう、以下のコードに追記する形で実装してください。**
 
+（１７）Answer:
 ```kotlin
 class SampleActivity : Activity() {
     private var counter: Int = 0
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        counter = savedInstanceState?.getInt(PROP_COUNTER) ?: 0
+    }
+
+    companion object {
+        private const val PROP_COUNTER = "PROP_COUNTER"
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt(PROP_COUNTER, counter)
     }
 }
 ```
-
