@@ -4,7 +4,7 @@
 **（１）モバイルアプリを開発する上で、設計上留意すべき点はどこになるか、サーバサイドやフロントエンドとの違いの観点から説明してください。**
 （１） Answer:
 ```
-When designing mobile application, it's little different than web app design. Because in the case of web, the pages are not aware of the whole system. Only some information is inherited between pages by cookies and URL parameters. But in the case of Mobile app, Apps need to know all the data, the flow of information, and the actions of users within their own processes. Server side and Mobile app side is different in design sense. Server side is responsible for storing and providing data in the means of API etc. App side is responsible for fetching, modifying, storing data communicating server, and also serving these data to users through UI. So, these points should be kep in mind while designing Mobile application.
+When designing mobile application, it's little different than web app design. Because in the case of web, the pages are not aware of the whole system. Only some information is inherited between pages by cookies and URL parameters. But in the case of Mobile app, Apps need to know all the data, the flow of information, and the actions of users within their own processes. Server side and Mobile app side is different in design sense. Server side is responsible for storing and providing data in the means of API etc. App side is responsible for fetching, modifying, storing data communicating server, and also serving these data to users through UI. So, these points should be kep in mind while designing Mobile application. Also, we have to consider app lifecycle when designing mobile applications. As there are various lifecycle in app, like onStart, onCreate, onPause, onResume, onRestart, onStop etc. in both Activity and Fragments, we have to consider these lifecycle things. And as app can be opened in various ways, like tapping app icon in home screen of mobile, tapping push notifications, from Deep link etc. these entry point should be considered and processing should be handled accordingly. And as there are foreground and background concept in app, due to lifecycle, these things should be kept in mind for UI updating, data updating etc.
 ```
 
 **（２）Activityへの過度な依存や類似/同一コードの重複を避けるため、コード設計上どのような対策をとることが望ましいか、プレゼンテーション層（View）と処理・ビジネスロジック（Controller）それぞれの観点から説明してください。**
@@ -479,11 +479,11 @@ enum class Gender(val id: Int) {
     UNKNOWN(0), MALE(1), FEMALE(2);
     
     fun convert(): Gender {
-        return when {
-            this == MALE -> {
+        return when(this) {
+            MALE -> {
                 FEMALE
             }
-            this == FEMALE -> {
+            FEMALE -> {
                 MALE
             }
             else -> {
@@ -572,7 +572,16 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun contentDao(): ContentDao
     
     companion object {
+    
+        @Volatile private var INSTANCE: AppDatabase? = null
+
         fun getInstance(): AppDatabase {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: buildDatabase(context).also { INSTANCE = it }
+            }
+        }
+
+        private fun buildDatabase(context: Context): AppDatabase {
             return Room.databaseBuilder(
                 App.context,
                 AppDatabase::class.java,
@@ -695,20 +704,20 @@ interface Animal {
     val id: Int
     val name: String
 }
+
+class GenericsAnimal<T: Animal>(var animal: T)
+
 class SampleCustomView: FrameLayout {
     ジェネリクスを使った場合
-    var data: Animal? by Delegates.observable(null) {_, _, _ ->
-        textView?.text = data?.name
+    var data: GenericsAnimal<Animal>? by Delegates.observable(null) {_, _, _ ->
+        textView?.text = data?.animal?.name
     }
 
     ジェネリクスを使わない場合
-    var cat: Cat? by Delegates.observable(null) {_, _, _ ->
-        textView?.text = cat?.name
+    var data: Animal? by Delegates.observable(null) {_, _, _ ->
+        textView?.text = data?.name
     }
-    //Or
-    var dog: Dog? by Delegates.observable(null) {_, _, _ ->
-        textView?.text = dog?.name
-    }
+    
     private val textView: TextView?
         get() = findViewById<TextView>(R.id.text_view) as? TextView
 }
@@ -718,7 +727,9 @@ class SampleCustomView: FrameLayout {
 ①　その「モデルデータ」がnullになるケースとしてどのようなケースが考えられるか。わかりやすく説明してください。
 
 （１６）① Answer:
-モーデルデータがnullになるケースであれば、UIにユーザーか分かるようにDefaultのテキストを表示します。最初はCacheからもらったデータや「Loading...」などのテキストを表示します。もらったデータはNULLであればその時にエラーメッセージとかを表示します。
+```
+モーデルデータがnullになるケースであれば、その時IDを使ってサーバからデータを持ってきて表示します。サーバからもデータがもらうできなければエラーメッセージとかを表示します。あとは、モデルデータとIDどっちもnullであればデータ表示できないのでエラーメッセージを表示します。
+```
 
 ②　モデルデータがnullであった場合、どのようにして代替処理を行うか、以下のコードのTODO箇所を埋める形でコードを書いてください。
 
@@ -727,7 +738,30 @@ class SampleCustomView: FrameLayout {
 data class Content(
     var id: Int = 0,
     var text: String = ""
-)
+): Parcelable {
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    override fun writeToParcel(dest: Parcel?, flags: Int) {
+        dest?.writeInt(id)
+        dest?.writeString(text)
+    }
+
+    constructor(parcel: Parcel) : this (
+        parcel.readInt(),
+        parcel.readString() ?: ""
+    )
+
+    companion object CREATOR : Parcelable.Creator<Content> {
+        override fun createFromParcel(parcel: Parcel): Content {
+            return Content(parcel)
+        }
+        override fun newArray(size: Int): Array<Content?> {
+            return arrayOfNulls(size)
+        }
+    }
+}
 class ContentActivity : Activity() {
     companion object {
         private const val EXTRA_CONTENT = "EXTRA_CONTENT"
@@ -736,15 +770,45 @@ class ContentActivity : Activity() {
     private var content: Content by Delegates.observable(Content()) { _, _, _ ->
         updateView()
     }
-    
+
     private val textView: TextView?
         get() = findViewById<TextView>(R.id.text_view) as? TextView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_content)
-        textView?.text = "データの取得エラーです。しばらく時間をおいてから再度アクセスしてください。"
+
+        if (intent.hasExtra(EXTRA_CONTENT)) {
+            val data = intent.getParcelableExtra(EXTRA_CONTENT) as? Content
+            if (data != null) {
+                content = data
+            } else {
+                fetchContent()
+            }
+        } else {
+            fetchContent()
+        }
     }
-    textView?.text = "Loading..."
+
+    private fun updateView() {
+        textView?.text = content.text
+    }
+
+    private fun fetchContent() {
+        val contentId = intent.getIntExtra(EXTRA_CONTENT_ID, 0)
+        if (contentId != 0) {
+            ContentRepository().getContent(
+                contentId,
+                completion = { content ->
+                    this.content = content
+                },
+                failure = {
+                    Toast.makeText(this, "データの取得エラーです。詳細は表示できません。", Toast.LENGTH_SHORT)
+                }
+            )
+        } else {
+            Toast.makeText(this, "データの取得エラーです。詳細は表示できません。", Toast.LENGTH_SHORT)
+        }
+    }
 }
 class ContentRepository {
     fun getContent(
